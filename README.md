@@ -3,7 +3,7 @@
 > Sistema de inteligencia para el abastecimiento de puntos de venta en el sector retail colombiano.
 > Combina modelos de machine learning con una base de datos en la nube para generar pronósticos de demanda, detectar anomalías, optimizar pedidos y simular escenarios de riesgo.
 
-**Versión:** 2.0 | **Fecha:** Abril 2026
+**Versión:** 3.0 | **Fecha:** Abril 2026
 
 ---
 
@@ -34,6 +34,9 @@ El proyecto está diseñado para:
 - Calcular la cantidad óptima de pedido por SKU (EOQ)
 - Detectar productos que se compran juntos (Market Basket)
 - Simular miles de escenarios de riesgo de quiebre (Monte Carlo)
+- Calcular el índice de rentabilidad real por SKU y tienda
+- Medir la velocidad de rotación de productos
+- Evaluar la eficiencia de reposición por tienda
 - Actualizar la información de forma incremental sin intervención manual
 
 ---
@@ -45,7 +48,7 @@ El proyecto está diseñado para:
 | Componente | Tecnología | Función |
 |---|---|---|
 | Base de datos | PostgreSQL en Neon | Almacenamiento de toda la data |
-| Modelos ML | Python (Prophet, LightGBM, Scikit-learn, mlxtend) | Pronósticos, segmentación y optimización |
+| Modelos ML | Python (Prophet, LightGBM, Scikit-learn, mlxtend, NumPy) | Pronósticos, segmentación y optimización |
 | Tablero | Streamlit + Plotly | Visualización de indicadores |
 | Publicación | Streamlit Community Cloud | Acceso web sin servidor propio |
 | Control de versiones | GitHub | Repositorio del código fuente |
@@ -58,13 +61,16 @@ Carga histórica inicial (12 meses)
 Go_BD en Neon PostgreSQL
         ↓
 Modelos ML
-  ├── Prophet          → pronósticos de demanda
-  ├── LightGBM         → predicción por tienda
-  ├── K-Means / ABC    → segmentación
-  ├── Isolation Forest → anomalías
-  ├── EOQ              → cantidad óptima de pedido
-  ├── Market Basket    → productos que se compran juntos
-  └── Monte Carlo      → simulación de riesgo
+  ├── Prophet              → pronósticos de demanda
+  ├── LightGBM             → predicción por tienda
+  ├── K-Means / ABC        → segmentación
+  ├── Isolation Forest     → anomalías
+  ├── EOQ                  → cantidad óptima de pedido
+  ├── Market Basket        → productos que se compran juntos
+  ├── Monte Carlo          → simulación de riesgo
+  ├── Rentabilidad         → índice de margen real por SKU
+  ├── Rotación             → velocidad de movimiento de productos
+  └── Eficiencia           → desempeño de reposición por tienda
         ↓
 Tablas de resultados en Go_BD
         ↓
@@ -167,7 +173,7 @@ Las credenciales se almacenan en el archivo `.env` localmente y como secrets en 
 
 ---
 
-### 3.4 Tablas generadas por modelos ML
+### 3.4 Tablas generadas por modelos
 
 | Tabla | Modelo | Contenido |
 |---|---|---|
@@ -179,6 +185,9 @@ Las credenciales se almacenan en el archivo `.env` localmente y como secrets en 
 | eoq_resultados | EOQ | Cantidad óptima de pedido, punto de reorden y stock de seguridad |
 | market_basket | Apriori | Reglas de asociación entre productos que se compran juntos |
 | monte_carlo | Monte Carlo | Simulación de riesgo de quiebre por SKU y tienda |
+| rentabilidad_sku | Rentabilidad | Índice de margen real por SKU y tienda |
+| rotacion_sku | Rotación | Velocidad de movimiento de productos por tienda |
+| eficiencia_reposicion | Eficiencia | Desempeño de reposición por tienda |
 | log_cargas | Sistema | Historial de ejecuciones de carga incremental |
 
 ---
@@ -217,7 +226,7 @@ Modelo de gradient boosting que incorpora variables contextuales de tienda y pro
 ### 4.3 K-Means — Segmentación
 
 - **ABC de SKUs:** alta (A=70%), media (B=20%) y baja (C=10%) rotación.
-- **Tiendas:** agrupa por demanda, stock y SKUs activos. Número óptimo de clusters determinado por coeficiente de silhouette.
+- **Tiendas:** agrupa por demanda, stock y SKUs activos. Número óptimo determinado por coeficiente de silhouette.
 
 ---
 
@@ -252,7 +261,7 @@ EOQ = √(2 × Demanda anual × Costo por pedido / Costo de almacenamiento)
 
 ### 4.6 Market Basket Analysis — Productos que se compran juntos
 
-Algoritmo Apriori aplicado sobre los top 50 SKUs más frecuentes.
+Algoritmo Apriori aplicado sobre los top 30 SKUs más frecuentes.
 
 | Métrica | Descripción |
 |---|---|
@@ -276,6 +285,50 @@ Simula 1,000 escenarios de demanda por SKU y tienda para los próximos 30 días.
 | Prob. quiebre | % de simulaciones donde el stock se agota |
 | Stock recomendado | Cantidad para cubrir el 95% de los escenarios |
 | Nivel riesgo | 🔴 Alto ≥70% / 🟡 Medio ≥40% / 🟢 Bajo <15% |
+
+---
+
+### 4.8 Índice de Rentabilidad
+
+Calcula el margen real por SKU y tienda cruzando el precio de venta real de las transacciones contra el costo del catálogo.
+
+| Indicador | Descripción |
+|---|---|
+| Margen unitario | Precio venta promedio − Costo |
+| Margen porcentual | Margen / Precio venta × 100 |
+| Rentabilidad total | Ingresos totales − Costos totales |
+| Descuento aplicado | Diferencia entre precio lista y precio venta real |
+| Índice rentabilidad | Score 0-100 combinando margen, volumen y rentabilidad |
+| Clasificación | 🟢 Alta / 🟡 Media / 🔴 Baja rentabilidad |
+
+---
+
+### 4.9 Velocidad de Rotación
+
+Mide qué tan rápido se mueve cada producto en cada tienda.
+
+| Indicador | Descripción |
+|---|---|
+| Tasa rotación anual | Veces que rota el inventario en un año |
+| DSI (Days Sales of Inventory) | Días que tarda en agotarse el stock actual |
+| Frecuencia de venta | % de días que registró venta |
+| Índice velocidad | Score 0-100 combinando rotación, frecuencia y DSI |
+| Clasificación | 🚀 Alta / 🔄 Media / 🐢 Lenta / ❄️ Sin movimiento |
+
+---
+
+### 4.10 Eficiencia de Reposición
+
+Evalúa qué tan bien está gestionando cada tienda su proceso de abastecimiento.
+
+| Indicador | Descripción |
+|---|---|
+| Cobertura de reposición | % de lo vendido que fue repuesto |
+| Tasa de devolución | % de lo vendido que fue devuelto |
+| Eficiencia de SKUs | % de SKUs vendidos que también fueron repuestos |
+| Repos por mes | Frecuencia promedio de reposición mensual |
+| Índice eficiencia | Score 0-100 combinando cobertura, devoluciones y SKUs |
+| Clasificación | 🟢 Alta / 🟡 Media / 🔴 Baja eficiencia |
 
 ---
 
@@ -310,21 +363,24 @@ python carga_incremental.py
 
 ```
 Go_Retail/
-├── .env                        # Credenciales de conexión (no se sube a GitHub)
-├── .gitignore                  # Archivos excluidos del repositorio
-├── requirements.txt            # Librerías Python necesarias
-├── README.md                   # Documentación técnica
-├── crear_tablas_Go_BD.py       # Crea las 4 tablas base en Go_BD
-├── generar_historico.py        # Genera la data sintética histórica
-├── carga_incremental.py        # Script de carga incremental manual
-├── modelo_pronostico.py        # Modelo Prophet
-├── modelo_lightgbm.py          # Modelo LightGBM
-├── modelo_segmentacion.py      # Segmentación ABC y K-Means
-├── modelo_anomalias.py         # Detección de anomalías Isolation Forest
-├── modelo_eoq.py               # Cantidad óptima de pedido EOQ
-├── modelo_market_basket.py     # Productos que se compran juntos
-├── modelo_monte_carlo.py       # Simulación de riesgo de quiebre
-└── tablero.py                  # Tablero Streamlit con carga automática
+├── .env                              # Credenciales de conexión (no se sube a GitHub)
+├── .gitignore                        # Archivos excluidos del repositorio
+├── requirements.txt                  # Librerías Python necesarias
+├── README.md                         # Documentación técnica
+├── crear_tablas_Go_BD.py             # Crea las 4 tablas base en Go_BD
+├── generar_historico.py              # Genera la data sintética histórica
+├── carga_incremental.py              # Script de carga incremental manual
+├── modelo_pronostico.py              # Modelo Prophet
+├── modelo_lightgbm.py                # Modelo LightGBM
+├── modelo_segmentacion.py            # Segmentación ABC y K-Means
+├── modelo_anomalias.py               # Detección de anomalías Isolation Forest
+├── modelo_eoq.py                     # Cantidad óptima de pedido EOQ
+├── modelo_market_basket.py           # Productos que se compran juntos
+├── modelo_monte_carlo.py             # Simulación de riesgo de quiebre
+├── modelo_rentabilidad.py            # Índice de rentabilidad por SKU y tienda
+├── modelo_rotacion.py                # Velocidad de rotación de productos
+├── modelo_eficiencia_reposicion.py   # Eficiencia de reposición por tienda
+└── tablero.py                        # Tablero Streamlit con carga automática
 ```
 
 ---
@@ -384,7 +440,21 @@ Lift > 2 = abastecer productos juntos. Lift > 3 = considerar como combo.
 | 🟡 Medio | 40–70% | Monitorear |
 | 🟢 Bajo | < 15% | Estable |
 
-Stock recomendado = cantidad para cubrir el 95% de los escenarios simulados.
+### 7.13 Índice de Rentabilidad
+- **🟢 Alta:** margen e ingresos por encima del promedio. Priorizar disponibilidad.
+- **🟡 Media:** rentabilidad aceptable. Optimizar descuentos.
+- **🔴 Baja:** margen bajo o ventas insuficientes. Revisar precio o descontinuar.
+
+### 7.14 Velocidad de Rotación
+- **🚀 Alta:** producto estrella. Nunca debe estar en quiebre.
+- **🔄 Media:** seguimiento regular de inventario.
+- **🐢 Lenta:** revisar si vale la pena mantener stock alto.
+- **❄️ Sin movimiento:** stock inmovilizado. Considerar liquidación.
+
+### 7.15 Eficiencia de Reposición
+- **🟢 Alta:** tienda bien gestionada. Reposición oportuna y baja devolución.
+- **🟡 Media:** oportunidades de mejora en proceso de abastecimiento.
+- **🔴 Baja:** tienda con problemas crónicos de reposición. Requiere intervención.
 
 ---
 
@@ -416,6 +486,9 @@ python modelo_anomalias.py
 python modelo_eoq.py
 python modelo_market_basket.py
 python modelo_monte_carlo.py
+python modelo_rentabilidad.py
+python modelo_rotacion.py
+python modelo_eficiencia_reposicion.py
 
 python -m streamlit run tablero.py
 ```
@@ -451,11 +524,11 @@ DB_PORT = "5432"
 | lightgbm | 4.6.0 | Predicción por tienda |
 | scikit-learn | 1.8.0 | Clustering y anomalías |
 | mlxtend | 0.24.0 | Market Basket Analysis |
-| numpy | 2.4.4 | Simulación Monte Carlo |
+| numpy | 2.4.4 | Cálculos y simulación Monte Carlo |
 | psycopg2-binary | latest | Conexión PostgreSQL |
 | sqlalchemy | latest | ORM SQL |
 | python-dotenv | latest | Variables de entorno |
 
 ---
 
-*Go Retail — Documentación técnica v2.0 — Abril 2026*
+*Go Retail — Documentación técnica v3.0 — Abril 2026*
