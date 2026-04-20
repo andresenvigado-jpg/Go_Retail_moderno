@@ -560,7 +560,139 @@ except Exception:
     st.info("ℹ️ Ejecuta modelo_monte_carlo.py para ver la simulación de riesgo de quiebre.")
 
 # ─────────────────────────────────────────
+# Sección Rentabilidad
+# ─────────────────────────────────────────
+st.divider()
+st.subheader("💰 Índice de Rentabilidad por SKU y Tienda")
+
+try:
+    df_rent = pd.read_sql("SELECT * FROM rentabilidad_sku ORDER BY indice_rentabilidad DESC", conectar_engine())
+    if not df_rent.empty:
+        alta  = len(df_rent[df_rent["clasificacion"] == "🟢 Alta rentabilidad"])
+        media = len(df_rent[df_rent["clasificacion"] == "🟡 Rentabilidad media"])
+        baja  = len(df_rent[df_rent["clasificacion"] == "🔴 Baja rentabilidad"])
+        margen_prom = df_rent["margen_porcentual"].mean()
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Alta rentabilidad",   alta,  delta=f"{alta} SKUs",  delta_color="normal")
+        c2.metric("Rentabilidad media",  media, delta=f"{media} SKUs", delta_color="off")
+        c3.metric("Baja rentabilidad",   baja,  delta=f"{baja} SKUs",  delta_color="inverse")
+        c4.metric("Margen promedio",      f"{margen_prom:.1f}%",        delta_color="off")
+
+        col_r1, col_r2 = st.columns(2)
+        with col_r1:
+            st.markdown("**🏆 Top 15 SKUs más rentables**")
+            df_top_r = df_rent[["sku_id","tienda_id","categoria","margen_porcentual",
+                                 "rentabilidad_total","indice_rentabilidad","clasificacion"]].head(15)
+            df_top_r.columns = ["SKU","Tienda","Categoría","Margen %","Rentabilidad COP","Índice","Clasificación"]
+            st.dataframe(df_top_r, use_container_width=True, height=380, hide_index=True)
+
+        with col_r2:
+            st.markdown("**📊 Rentabilidad promedio por categoría**")
+            df_cat_r = df_rent.groupby("categoria").agg(
+                margen_prom      =("margen_porcentual",  "mean"),
+                rentabilidad_sum =("rentabilidad_total", "sum"),
+                skus             =("sku_id",             "nunique")
+            ).round(1).reset_index().sort_values("margen_prom", ascending=False)
+            fig_r = px.bar(df_cat_r, x="categoria", y="margen_prom",
+                           color="margen_prom", color_continuous_scale="Greens",
+                           labels={"categoria": "Categoría", "margen_prom": "Margen promedio %"})
+            fig_r.update_layout(margin=dict(l=0, r=0, t=10, b=0), height=380,
+                                 showlegend=False, coloraxis_showscale=False)
+            st.plotly_chart(fig_r, use_container_width=True)
+except Exception:
+    st.info("ℹ️ Ejecuta modelo_rentabilidad.py para ver el índice de rentabilidad.")
+
+# ─────────────────────────────────────────
+# Sección Rotación
+# ─────────────────────────────────────────
+st.divider()
+st.subheader("🔄 Velocidad de Rotación por SKU y Tienda")
+
+try:
+    df_rot = pd.read_sql("SELECT * FROM rotacion_sku ORDER BY indice_velocidad DESC", conectar_engine())
+    if not df_rot.empty:
+        alta_rot  = len(df_rot[df_rot["clasificacion_rotacion"] == "🚀 Alta rotación"])
+        media_rot = len(df_rot[df_rot["clasificacion_rotacion"] == "🔄 Rotación media"])
+        lenta_rot = len(df_rot[df_rot["clasificacion_rotacion"] == "🐢 Rotación lenta"])
+        sin_mov   = len(df_rot[df_rot["clasificacion_rotacion"] == "❄️  Sin movimiento"])
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Alta rotación",   alta_rot,  delta_color="normal")
+        c2.metric("Rotación media",  media_rot, delta_color="off")
+        c3.metric("Rotación lenta",  lenta_rot, delta_color="inverse")
+        c4.metric("Sin movimiento",  sin_mov,   delta_color="inverse")
+
+        col_v1, col_v2 = st.columns(2)
+        with col_v1:
+            st.markdown("**🚀 Top 15 SKUs de mayor rotación**")
+            df_top_v = df_rot[["sku_id","tienda_id","categoria","tasa_rotacion_anual",
+                                "dsi","frecuencia_venta","indice_velocidad","clasificacion_rotacion"]].head(15)
+            df_top_v.columns = ["SKU","Tienda","Categoría","Rotación anual","DSI días","Frecuencia %","Índice","Clasificación"]
+            st.dataframe(df_top_v, use_container_width=True, height=380, hide_index=True)
+
+        with col_v2:
+            st.markdown("**📊 Distribución de velocidad por categoría**")
+            df_cat_v = df_rot.groupby("categoria").agg(
+                velocidad_prom=("indice_velocidad",    "mean"),
+                dsi_prom      =("dsi",                 "mean"),
+                skus          =("sku_id",              "nunique")
+            ).round(1).reset_index().sort_values("velocidad_prom", ascending=False)
+            fig_v = px.bar(df_cat_v, x="categoria", y="velocidad_prom",
+                           color="velocidad_prom", color_continuous_scale="Blues",
+                           labels={"categoria": "Categoría", "velocidad_prom": "Índice velocidad promedio"})
+            fig_v.update_layout(margin=dict(l=0, r=0, t=10, b=0), height=380,
+                                 showlegend=False, coloraxis_showscale=False)
+            st.plotly_chart(fig_v, use_container_width=True)
+except Exception:
+    st.info("ℹ️ Ejecuta modelo_rotacion.py para ver la velocidad de rotación.")
+
+# ─────────────────────────────────────────
+# Sección Eficiencia de Reposición
+# ─────────────────────────────────────────
+st.divider()
+st.subheader("🏪 Eficiencia de Reposición por Tienda")
+
+try:
+    df_ef = pd.read_sql("SELECT * FROM eficiencia_reposicion ORDER BY indice_eficiencia DESC", conectar_engine())
+    if not df_ef.empty:
+        alta_ef  = len(df_ef[df_ef["clasificacion_eficiencia"] == "🟢 Alta eficiencia"])
+        media_ef = len(df_ef[df_ef["clasificacion_eficiencia"] == "🟡 Eficiencia media"])
+        baja_ef  = len(df_ef[df_ef["clasificacion_eficiencia"] == "🔴 Baja eficiencia"])
+        cob_prom = df_ef["cobertura_reposicion"].mean()
+
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Alta eficiencia",    alta_ef,  delta_color="normal")
+        c2.metric("Eficiencia media",   media_ef, delta_color="off")
+        c3.metric("Baja eficiencia",    baja_ef,  delta_color="inverse")
+        c4.metric("Cobertura promedio", f"{cob_prom:.1f}%", delta_color="off")
+
+        col_e1, col_e2 = st.columns(2)
+        with col_e1:
+            st.markdown("**🏆 Ranking de tiendas por eficiencia**")
+            df_top_e = df_ef[["nombre_tienda","ciudad","zona","cobertura_reposicion",
+                               "tasa_devolucion","indice_eficiencia","clasificacion_eficiencia"]]
+            df_top_e.columns = ["Tienda","Ciudad","Zona","Cobertura %","Devolución %","Índice","Clasificación"]
+            st.dataframe(df_top_e, use_container_width=True, height=380, hide_index=True)
+
+        with col_e2:
+            st.markdown("**📊 Índice de eficiencia por ciudad**")
+            df_ciudad = df_ef.groupby("ciudad").agg(
+                eficiencia_prom   =("indice_eficiencia",    "mean"),
+                cobertura_prom    =("cobertura_reposicion", "mean"),
+                tiendas           =("tienda_id",            "count")
+            ).round(1).reset_index().sort_values("eficiencia_prom", ascending=False)
+            fig_e = px.bar(df_ciudad, x="ciudad", y="eficiencia_prom",
+                           color="eficiencia_prom", color_continuous_scale="RdYlGn",
+                           labels={"ciudad": "Ciudad", "eficiencia_prom": "Índice eficiencia promedio"})
+            fig_e.update_layout(margin=dict(l=0, r=0, t=10, b=0), height=380,
+                                 showlegend=False, coloraxis_showscale=False)
+            st.plotly_chart(fig_e, use_container_width=True)
+except Exception:
+    st.info("ℹ️ Ejecuta modelo_eficiencia_reposicion.py para ver la eficiencia de reposición.")
+
+# ─────────────────────────────────────────
 # Footer
 # ─────────────────────────────────────────
 st.divider()
-st.caption("Go Retail · Modelos: Prophet · LightGBM · K-Means · Isolation Forest · EOQ · Monte Carlo · Market Basket · Base de datos: Neon PostgreSQL")
+st.caption("Go Retail · Modelos: Prophet · LightGBM · K-Means · Isolation Forest · EOQ · Monte Carlo · Market Basket · Rentabilidad · Rotación · Eficiencia · Base de datos: Neon PostgreSQL")
