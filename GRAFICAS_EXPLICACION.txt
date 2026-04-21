@@ -1,0 +1,191 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║           GO RETAIL — EXPLICACIÓN DE GRÁFICAS (FÁCIL DE ENTENDER)          ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+Imagina que una tienda es como tu cuarto de juguetes. Tienes muchos juguetes
+(productos), y necesitas saber cuáles usas más, cuáles te faltan, y cuáles
+ya no quiere nadie. ¡Eso es lo que hacen estas gráficas!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊  PÁGINA PRINCIPAL (Dashboard)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔷 Gráfica de barras — "Demanda Estimada: Top 8 SKUs"
+-------------------------------------------------------
+¿Qué muestra?
+  Imagina que tienes 8 juguetes favoritos. Esta gráfica te dice cuántas
+  personas van a querer cada juguete la próxima semana. Las barras más altas
+  significan que ese juguete es el más pedido. ¡Así sabemos qué necesitamos
+  comprar más urgente!
+
+¿Para qué sirve?
+  Para que la tienda nunca se quede sin los productos que más pide la gente.
+  Es como preparar suficientes porciones de pastel antes de la fiesta.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📈  PÁGINA DE DEMANDA (Pronósticos)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔷 Gráfica de líneas — "Pronóstico Prophet: Top 5 SKUs (próximos 30 días)"
+---------------------------------------------------------------------------
+¿Qué muestra?
+  Es como un mapa del futuro. La computadora estudió cuánto se vendió cada
+  producto durante muchos meses, y ahora adivina cuánto se va a vender en
+  los próximos 30 días. Cada línea de color es un producto diferente.
+  Si la línea sube, se venderá más. Si baja, se venderá menos.
+
+¿Para qué sirve?
+  Para pedir los productos con tiempo y no quedarse con anaqueles vacíos.
+  Es como saber con anticipación cuánta comida necesitas para la semana.
+
+🔷 Gráfica de puntos — "LightGBM: Real vs Predicho"
+-----------------------------------------------------
+¿Qué muestra?
+  Imagina que adivinas cuántos caramelos hay en un frasco. Después cuentas
+  los caramelos de verdad. Esta gráfica compara lo que la computadora
+  "adivinó" (eje horizontal) con lo que pasó "de verdad" (eje vertical).
+  Si los puntos forman una línea diagonal, ¡la computadora adivinó muy bien!
+
+¿Para qué sirve?
+  Para saber si nuestra máquina de predicción es confiable. Si los puntos
+  están muy dispersos, hay que mejorar el modelo.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📦  PÁGINA DE INVENTARIO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔷 Gráfica de pastel — "Tipos de Anomalías (Isolation Forest)"
+---------------------------------------------------------------
+¿Qué muestra?
+  Imagina que revisas tus juguetes y encuentras algunos raros: uno que nadie
+  toca nunca, otro que de repente todos quieren, o uno que desapareció.
+  Eso es una "anomalía". Este pastel muestra cuántas anomalías hay de cada
+  tipo en el inventario. Cada pedazo del pastel es un tipo de problema.
+
+¿Para qué sirve?
+  Para detectar cosas raras en el inventario antes de que se conviertan en
+  un problema grande. Es como encontrar un calcetín perdido antes de que
+  mamá pregunte dónde está el par.
+
+🔷 Gráfica de barras — "Monte Carlo: Nivel de Riesgo"
+------------------------------------------------------
+¿Qué muestra?
+  Imagina que lanzas un dado 1,000 veces para saber qué número sale más.
+  Monte Carlo hace algo parecido: simula muchas situaciones posibles para
+  ver qué tan probable es quedarse sin stock. Las barras muestran cuántos
+  productos tienen riesgo BAJO, MEDIO o ALTO de agotarse.
+
+¿Para qué sirve?
+  Para prepararse ante lo inesperado. Si muchos productos tienen riesgo
+  ALTO, hay que pedir más mercancía rápido. Es como llevar paraguas porque
+  hay 80% de probabilidad de lluvia.
+
+🔷 Tabla — "EOQ por SKU-Tienda"
+--------------------------------
+¿Qué muestra?
+  EOQ significa "Cantidad Económica de Pedido". Es la cantidad perfecta que
+  debes pedir de cada producto para no gastar de más ni quedarte sin stock.
+  La tabla muestra, para cada producto y tienda: cuánto pedir, cuándo
+  pedirlo, y cuánto guardar como reserva de emergencia.
+
+¿Para qué sirve?
+  Es como saber exactamente cuántos paquetes de galletas comprar: ni tan
+  pocos que se acaben, ni tantos que se pongan rancias.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰  PÁGINA DE ANALÍTICA (Análisis del Negocio)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔷 Gráfica de barras — "Índice de Rentabilidad: Top SKUs"
+----------------------------------------------------------
+¿Qué muestra?
+  Rentabilidad = cuánto dinero gana la tienda por cada producto que vende.
+  Las barras más altas son los productos que más dinero dejan. Los colores
+  pueden indicar si el producto es muy rentable (verde) o poco (rojo).
+
+¿Para qué sirve?
+  Para saber en qué productos enfocarse. Es como descubrir cuál juguete te
+  da más felicidad para decidir cuál pedir de regalo en tu cumpleaños.
+
+🔷 Gráfica de pastel — "Clasificación de Rotación"
+---------------------------------------------------
+¿Qué muestra?
+  "Rotación" significa qué tan rápido se vende un producto. Este pastel
+  divide los productos en grupos: los que se venden MUY RÁPIDO (alta
+  rotación), los que van despacio, y los que casi nadie compra. Cada
+  pedazo del pastel representa un grupo.
+
+¿Para qué sirve?
+  Para saber qué productos necesitan atención especial. Un producto que
+  no rota es dinero dormido en el anaquel. Es como tener juguetes que
+  nunca sacas de la caja — ¡un desperdicio!
+
+🔷 Gráfica de barras horizontal — "Eficiencia de Reposición por Tienda"
+-----------------------------------------------------------------------
+¿Qué muestra?
+  Cada tienda tiene su propia barra que dice qué tan bien repone su
+  inventario. Si la barra es larga, esa tienda hace muy bien su trabajo
+  de surtir los productos a tiempo. Si es corta, tiene problemas.
+
+¿Para qué sirve?
+  Para identificar qué tiendas necesitan ayuda o mejores procesos. Es
+  como comparar qué tan ordenado tiene cada niño su cuarto: el que lo
+  tiene más ordenado recibe una estrella dorada.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛒  PÁGINA DE PRODUCTOS (Segmentación y Canastas)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔷 Gráfica de pastel — "Segmentación ABC de SKUs"
+--------------------------------------------------
+¿Qué muestra?
+  Imagina que ordenas todos tus juguetes del más al menos usado.
+  - Grupo A (los favoritos): son pocos pero representan el 70% de las ventas
+  - Grupo B (los de en medio): representan el 20% de las ventas
+  - Grupo C (los que casi no usas): son muchos pero solo el 10% de ventas
+  El pastel muestra qué tan grande es cada grupo.
+
+¿Para qué sirve?
+  Para enfocarse en lo importante. Los productos "A" nunca deben faltar.
+  Es como saber que debes proteger siempre tu juguete favorito porque es
+  el que más usas.
+
+🔷 Gráfica de barras horizontal — "Market Basket: Productos más comprados juntos (Lift)"
+----------------------------------------------------------------------------------------
+¿Qué muestra?
+  Cuando alguien compra pan, casi siempre compra mantequilla también. Eso
+  es "Market Basket" (canasta del mercado). Esta gráfica muestra qué
+  productos se compran juntos con más frecuencia. El número "Lift" (elevación)
+  nos dice qué tan fuerte es esa relación:
+  - Lift > 2: se compran juntos bastante seguido
+  - Lift > 3: casi siempre van juntos
+
+¿Para qué sirve?
+  Para poner los productos relacionados cerca uno del otro en la tienda,
+  o para crear ofertas tipo "compra esto y llévate aquello". Es como saber
+  que si alguien pide hot dogs, también querrá mostaza.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝  RESUMEN RAPIDÍSIMO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📊 Barras (Dashboard)      → ¿Cuánto se va a pedir de cada producto?
+  📈 Líneas (Demanda)        → ¿Cómo van a cambiar las ventas en 30 días?
+  🔵 Puntos (LightGBM)       → ¿Qué tan bien adivina nuestra computadora?
+  🥧 Pastel (Anomalías)      → ¿Qué cosas raras hay en el inventario?
+  📊 Barras (Monte Carlo)    → ¿Qué tan en riesgo está nuestro stock?
+  📋 Tabla (EOQ)             → ¿Cuánto y cuándo pedir de cada producto?
+  📊 Barras (Rentabilidad)   → ¿Qué productos ganan más dinero?
+  🥧 Pastel (Rotación)       → ¿Qué productos se venden rápido o lento?
+  📊 Barras (Eficiencia)     → ¿Qué tiendas reponen bien su inventario?
+  🥧 Pastel (ABC)            → ¿Cuáles son los productos estrella?
+  📊 Barras (Market Basket)  → ¿Qué productos se compran juntos?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Go Retail Intelligence Platform — go_retail@2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

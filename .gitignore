@@ -1,0 +1,18 @@
+# Entorno
+.env
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE
+.vscode/
+.idea/
+
+# ML artefactos
+*.pkl
+*.joblib
+
+# Logs
+*.log
