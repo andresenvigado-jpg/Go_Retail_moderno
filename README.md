@@ -1,534 +1,589 @@
-# 📦 Go Retail — Tablero de Abastecimiento
+# 🛒 Go Retail — Plataforma de Inteligencia de Supply Chain
 
-> Sistema de inteligencia para el abastecimiento de puntos de venta en el sector retail colombiano.
-> Combina modelos de machine learning con una base de datos en la nube para generar pronósticos de demanda, detectar anomalías, optimizar pedidos y simular escenarios de riesgo.
-
-**Versión:** 3.0 | **Fecha:** Abril 2026
+> Sistema de análisis inteligente para retail que combina modelos de Machine Learning, pronósticos de demanda y optimización de inventario, construido con arquitectura limpia (Clean Architecture) sobre FastAPI + React.
 
 ---
 
-## Tabla de contenido
+## 📋 Tabla de Contenido
 
-1. [Descripción general](#1-descripción-general)
-2. [Arquitectura del sistema](#2-arquitectura-del-sistema)
-3. [Base de datos — Go_BD](#3-base-de-datos--go_bd)
-4. [Modelos de Machine Learning](#4-modelos-de-machine-learning)
-5. [Gestión de data](#5-gestión-de-data)
-6. [Estructura del proyecto](#6-estructura-del-proyecto)
-7. [Cómo interpretar el tablero](#7-cómo-interpretar-el-tablero)
-8. [Instalación y ejecución local](#8-instalación-y-ejecución-local)
-9. [Publicación en Streamlit Cloud](#9-publicación-en-streamlit-cloud)
-10. [Librerías utilizadas](#10-librerías-utilizadas)
-
----
-
-## 1. Descripción general
-
-Go Retail es un sistema de inteligencia para el abastecimiento de puntos de venta en el sector retail colombiano. El sistema se actualiza dos veces por semana de forma automática y presenta los resultados en un tablero interactivo accesible desde cualquier navegador.
-
-El proyecto está diseñado para:
-
-- Pronosticar la demanda por producto y tienda
-- Detectar quiebres de stock y riesgos de reposición
-- Segmentar productos y tiendas por comportamiento de ventas
-- Calcular la cantidad óptima de pedido por SKU (EOQ)
-- Detectar productos que se compran juntos (Market Basket)
-- Simular miles de escenarios de riesgo de quiebre (Monte Carlo)
-- Calcular el índice de rentabilidad real por SKU y tienda
-- Medir la velocidad de rotación de productos
-- Evaluar la eficiencia de reposición por tienda
-- Actualizar la información de forma incremental sin intervención manual
+- [Descripción General](#-descripción-general)
+- [Stack Tecnológico](#-stack-tecnológico)
+- [Arquitectura del Proyecto](#-arquitectura-del-proyecto)
+- [Estructura de Directorios](#-estructura-de-directorios)
+- [Modelos de Datos](#-modelos-de-datos)
+- [Modelos de Machine Learning](#-modelos-de-machine-learning)
+- [API REST](#-api-rest)
+- [Frontend](#-frontend)
+- [Explicación de Gráficas](#-explicación-de-gráficas)
+- [Instalación y Ejecución](#-instalación-y-ejecución)
+- [Variables de Entorno](#-variables-de-entorno)
 
 ---
 
-## 2. Arquitectura del sistema
+## 📌 Descripción General
 
-### 2.1 Componentes principales
+Go Retail es una plataforma de inteligencia operativa para cadenas de tiendas. Permite:
 
-| Componente | Tecnología | Función |
-|---|---|---|
-| Base de datos | PostgreSQL en Neon | Almacenamiento de toda la data |
-| Modelos ML | Python (Prophet, LightGBM, Scikit-learn, mlxtend, NumPy) | Pronósticos, segmentación y optimización |
-| Tablero | Streamlit + Plotly | Visualización de indicadores |
-| Publicación | Streamlit Community Cloud | Acceso web sin servidor propio |
-| Control de versiones | GitHub | Repositorio del código fuente |
+- **Pronosticar la demanda** de productos con modelos Prophet y LightGBM
+- **Detectar anomalías** en el inventario con Isolation Forest
+- **Optimizar pedidos** mediante el modelo EOQ y simulaciones Monte Carlo
+- **Segmentar productos y tiendas** con análisis ABC y K-Means
+- **Descubrir patrones de compra** con Market Basket Analysis (Apriori)
+- **Analizar rentabilidad y rotación** de SKUs por tienda
+- **Gestionar usuarios** con roles (admin, analyst, viewer) y autenticación JWT
 
-### 2.2 Flujo de datos
+---
+
+## 🛠 Stack Tecnológico
+
+### Backend
+
+| Capa | Tecnología | Versión |
+|------|-----------|---------|
+| Framework web | FastAPI | ≥ 0.115 |
+| Servidor ASGI | Uvicorn | ≥ 0.30 |
+| ORM | SQLAlchemy | ≥ 2.0 |
+| Base de datos | PostgreSQL (Neon) | — |
+| Driver DB | psycopg2-binary | ≥ 2.9 |
+| Validación | Pydantic v2 | ≥ 2.9 |
+| Autenticación | python-jose + bcrypt | JWT HS256 |
+| ML — Pronósticos | Prophet | — |
+| ML — Gradient Boosting | LightGBM | ≥ 4.5 |
+| ML — Clustering | scikit-learn (KMeans) | ≥ 1.5 |
+| ML — Anomalías | scikit-learn (IsolationForest) | ≥ 1.5 |
+| ML — Asociación | mlxtend (Apriori) | ≥ 0.23 |
+| Manipulación de datos | pandas / numpy | ≥ 2.x |
+| Configuración | python-dotenv | ≥ 1.0 |
+
+### Frontend
+
+| Tecnología | Versión |
+|-----------|---------|
+| React | 18.3.1 |
+| React Router | 6.27 |
+| Recharts | 2.13 |
+| Axios | 1.7 |
+| Vite | 5.4 |
+
+---
+
+## 🏛 Arquitectura del Proyecto
+
+El backend sigue **Clean Architecture** con cuatro capas claramente separadas:
 
 ```
-Carga histórica inicial (12 meses)
-        ↓
-Go_BD en Neon PostgreSQL
-        ↓
-Modelos ML
-  ├── Prophet              → pronósticos de demanda
-  ├── LightGBM             → predicción por tienda
-  ├── K-Means / ABC        → segmentación
-  ├── Isolation Forest     → anomalías
-  ├── EOQ                  → cantidad óptima de pedido
-  ├── Market Basket        → productos que se compran juntos
-  ├── Monte Carlo          → simulación de riesgo
-  ├── Rentabilidad         → índice de margen real por SKU
-  ├── Rotación             → velocidad de movimiento de productos
-  └── Eficiencia           → desempeño de reposición por tienda
-        ↓
-Tablas de resultados en Go_BD
-        ↓
-Tablero Streamlit (lectura y visualización)
-        ↓
-Carga incremental automática 2x semana
+┌─────────────────────────────────────────────────────────┐
+│                      API (FastAPI)                      │  ← Capa de presentación
+│          Endpoints · Middleware · Routers               │
+├─────────────────────────────────────────────────────────┤
+│                 Application (Use Cases)                 │  ← Lógica de aplicación
+│        DTOs · Use Cases · Orquestación ML              │
+├─────────────────────────────────────────────────────────┤
+│                      Domain                             │  ← Reglas de negocio puras
+│            Entities · Interfaces (contratos)           │
+├─────────────────────────────────────────────────────────┤
+│                   Infrastructure                        │  ← Detalles externos
+│      ORM Models · Repositories · ML Models            │
+└─────────────────────────────────────────────────────────┘
+                           ↕
+                    PostgreSQL (Neon)
 ```
 
----
-
-## 3. Base de datos — Go_BD
-
-### 3.1 Motor y plataforma
-
-- **Motor:** PostgreSQL
-- **Proveedor:** Neon (https://neon.tech)
-- **Plan:** Gratuito — 512 MB de almacenamiento
-- **Región:** us-east-1 (AWS)
-- **Conexión:** SSL requerido (`sslmode=require`)
-
-### 3.2 Cadena de conexión
-
+**Flujo de una petición:**
 ```
-postgresql://usuario:contraseña@host/neondb?sslmode=require
-```
-
-Las credenciales se almacenan en el archivo `.env` localmente y como secrets en Streamlit Cloud.
-
----
-
-### 3.3 Tablas base
-
-#### Tabla: `catalogos`
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | SERIAL PK | Identificador único del producto |
-| name | VARCHAR(255) | Nombre del SKU |
-| product_id | VARCHAR(100) | Código de producto |
-| categories | VARCHAR(255) | Categoría del producto |
-| brands | VARCHAR(255) | Marca |
-| price | NUMERIC(12,2) | Precio de venta |
-| cost | NUMERIC(12,2) | Costo del producto |
-| seasons | VARCHAR(100) | Temporada |
-| size | VARCHAR(50) | Talla |
-| department_name | VARCHAR(255) | Departamento o línea |
-| avoid_replenishment | BOOLEAN | Excluir de reposición automática |
-| custom_tipolinea | VARCHAR(100) | Tipo de línea (básica, premium, outlet) |
-| custom_año | INTEGER | Año de la colección |
-| custom_mes | INTEGER | Mes de la colección |
-| transaction_date_process | TIMESTAMP | Fecha de procesamiento |
-
-#### Tabla: `inventarios`
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | SERIAL PK | Identificador único |
-| location_id | VARCHAR(100) | ID de la tienda |
-| sku_id | VARCHAR(100) | ID del producto |
-| site_qty | NUMERIC(12,2) | Stock disponible en tienda |
-| transit_qty | NUMERIC(12,2) | Unidades en tránsito |
-| reserved_qty | NUMERIC(12,2) | Unidades reservadas |
-| min_stock | NUMERIC(12,2) | Stock mínimo permitido |
-| max_stock | NUMERIC(12,2) | Stock máximo permitido |
-| replenishment_lead_time | INTEGER | Días de tiempo de reposición |
-| status_date | DATE | Fecha del estado del inventario |
-| avoid_replenishment | BOOLEAN | Excluir de reposición |
-
-#### Tabla: `transacciones`
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | SERIAL PK | Identificador único |
-| receipt_id | VARCHAR(100) | Número de recibo o documento |
-| sku_id | VARCHAR(100) | ID del producto |
-| source_location_id | VARCHAR(100) | Origen (bodega central) |
-| target_location_id | VARCHAR(100) | Destino (tienda) |
-| quantity | NUMERIC(12,2) | Cantidad de unidades |
-| sale_price | NUMERIC(12,2) | Precio de venta aplicado |
-| currency | VARCHAR(10) | Moneda (COP) |
-| type | VARCHAR(50) | Tipo: venta, reposicion, devolucion, traslado |
-| transaction_date | TIMESTAMP | Fecha real de la transacción |
-| transaction_date_process | TIMESTAMP | Fecha de procesamiento |
-
-#### Tabla: `tiendas`
-
-| Campo | Tipo | Descripción |
-|---|---|---|
-| id | SERIAL PK | Identificador único |
-| name | VARCHAR(255) | Nombre de la tienda |
-| city | VARCHAR(100) | Ciudad |
-| region | VARCHAR(100) | Región o zona |
-| brands | VARCHAR(255) | Marcas que maneja |
-| type | VARCHAR(100) | Tipo de formato |
-| default_replenishment_lead_time | INTEGER | Lead time por defecto |
-| avoid_replenishment | BOOLEAN | Excluir de reposición |
-| custom_formato | VARCHAR(100) | Formato: grande, mediano, pequeño, express |
-| custom_clima | VARCHAR(100) | Clima: frío, templado, cálido, tropical |
-| custom_zona | VARCHAR(100) | Zona geográfica |
-
----
-
-### 3.4 Tablas generadas por modelos
-
-| Tabla | Modelo | Contenido |
-|---|---|---|
-| pronosticos | Prophet | Demanda estimada por SKU para los próximos 30 días |
-| predicciones_lgbm | LightGBM | Predicciones por SKU y tienda con variables contextuales |
-| segmentacion_skus | K-Means / ABC | Clasificación de productos por volumen de ventas |
-| segmentacion_tiendas | K-Means | Agrupación de tiendas por comportamiento de demanda |
-| anomalias_inventario | Isolation Forest | Detección de quiebres, sobrestock y anomalías |
-| eoq_resultados | EOQ | Cantidad óptima de pedido, punto de reorden y stock de seguridad |
-| market_basket | Apriori | Reglas de asociación entre productos que se compran juntos |
-| monte_carlo | Monte Carlo | Simulación de riesgo de quiebre por SKU y tienda |
-| rentabilidad_sku | Rentabilidad | Índice de margen real por SKU y tienda |
-| rotacion_sku | Rotación | Velocidad de movimiento de productos por tienda |
-| eficiencia_reposicion | Eficiencia | Desempeño de reposición por tienda |
-| log_cargas | Sistema | Historial de ejecuciones de carga incremental |
-
----
-
-## 4. Modelos de Machine Learning
-
-### 4.1 Prophet — Pronóstico de demanda
-
-Librería de Meta para series de tiempo con estacionalidad.
-
-| Parámetro | Valor |
-|---|---|
-| SKUs analizados | Top 10 por volumen de ventas |
-| Horizonte de pronóstico | 30 días |
-| Estacionalidad | Anual y semanal |
-| Intervalo de confianza | 95% |
-
----
-
-### 4.2 LightGBM — Predicción por tienda
-
-Modelo de gradient boosting que incorpora variables contextuales de tienda y producto.
-
-**Precisión del modelo (prototipo):** MAE = 1.23 unidades por predicción.
-
-| Variable influyente | Descripción |
-|---|---|
-| Costo / Precio | Principal predictor de demanda |
-| Lead time | Afecta el comportamiento de pedidos |
-| Ciudad | Diferencia el comportamiento por ubicación |
-| Talla | Ciertos talles rotan más |
-| Clima | Influye en las ventas por temporada |
-
----
-
-### 4.3 K-Means — Segmentación
-
-- **ABC de SKUs:** alta (A=70%), media (B=20%) y baja (C=10%) rotación.
-- **Tiendas:** agrupa por demanda, stock y SKUs activos. Número óptimo determinado por coeficiente de silhouette.
-
----
-
-### 4.4 Isolation Forest — Detección de anomalías
-
-Detecta el 10% de registros con comportamiento inusual.
-
-| Tipo | Condición | Acción |
-|---|---|---|
-| 🔴 Quiebre de stock | Stock < mínimo | Reposición inmediata |
-| 🟠 Riesgo de quiebre | Cobertura < lead time | Reposición urgente |
-| 🟡 Sobrestock | Stock > 150% del máximo | Revisar pedidos |
-| 🔵 Sin movimiento | Stock sin ventas | Evaluar discontinuar |
-
----
-
-### 4.5 EOQ — Cantidad óptima de pedido
-
-```
-EOQ = √(2 × Demanda anual × Costo por pedido / Costo de almacenamiento)
-```
-
-| Indicador | Descripción |
-|---|---|
-| EOQ | Cantidad óptima de unidades por pedido |
-| Stock de seguridad | Colchón ante variaciones (Z=1.65, nivel servicio 95%) |
-| Punto de reorden | Momento exacto para hacer el pedido |
-| Costo total optimizado | Costo mínimo posible de inventario |
-| Estado | 🔴 Pedir ahora / 🟡 Pedir pronto / 🟢 Stock OK |
-
----
-
-### 4.6 Market Basket Analysis — Productos que se compran juntos
-
-Algoritmo Apriori aplicado sobre los top 30 SKUs más frecuentes.
-
-| Métrica | Descripción |
-|---|---|
-| Soporte | % de transacciones donde aparecen juntos |
-| Confianza | Si compra A, % de probabilidad de comprar B |
-| Lift > 1 | Relación real y no casual |
-| Lift > 2 | Relación fuerte — abastecer juntos |
-| Lift > 3 | Relación muy fuerte — considerar como combo |
-
----
-
-### 4.7 Monte Carlo — Simulación de riesgo
-
-Simula 1,000 escenarios de demanda por SKU y tienda para los próximos 30 días.
-
-| Indicador | Descripción |
-|---|---|
-| Demanda P50 | Escenario normal |
-| Demanda P90 | Escenario alto |
-| Demanda P95 | Escenario crítico para dimensionar stock |
-| Prob. quiebre | % de simulaciones donde el stock se agota |
-| Stock recomendado | Cantidad para cubrir el 95% de los escenarios |
-| Nivel riesgo | 🔴 Alto ≥70% / 🟡 Medio ≥40% / 🟢 Bajo <15% |
-
----
-
-### 4.8 Índice de Rentabilidad
-
-Calcula el margen real por SKU y tienda cruzando el precio de venta real de las transacciones contra el costo del catálogo.
-
-| Indicador | Descripción |
-|---|---|
-| Margen unitario | Precio venta promedio − Costo |
-| Margen porcentual | Margen / Precio venta × 100 |
-| Rentabilidad total | Ingresos totales − Costos totales |
-| Descuento aplicado | Diferencia entre precio lista y precio venta real |
-| Índice rentabilidad | Score 0-100 combinando margen, volumen y rentabilidad |
-| Clasificación | 🟢 Alta / 🟡 Media / 🔴 Baja rentabilidad |
-
----
-
-### 4.9 Velocidad de Rotación
-
-Mide qué tan rápido se mueve cada producto en cada tienda.
-
-| Indicador | Descripción |
-|---|---|
-| Tasa rotación anual | Veces que rota el inventario en un año |
-| DSI (Days Sales of Inventory) | Días que tarda en agotarse el stock actual |
-| Frecuencia de venta | % de días que registró venta |
-| Índice velocidad | Score 0-100 combinando rotación, frecuencia y DSI |
-| Clasificación | 🚀 Alta / 🔄 Media / 🐢 Lenta / ❄️ Sin movimiento |
-
----
-
-### 4.10 Eficiencia de Reposición
-
-Evalúa qué tan bien está gestionando cada tienda su proceso de abastecimiento.
-
-| Indicador | Descripción |
-|---|---|
-| Cobertura de reposición | % de lo vendido que fue repuesto |
-| Tasa de devolución | % de lo vendido que fue devuelto |
-| Eficiencia de SKUs | % de SKUs vendidos que también fueron repuestos |
-| Repos por mes | Frecuencia promedio de reposición mensual |
-| Índice eficiencia | Score 0-100 combinando cobertura, devoluciones y SKUs |
-| Clasificación | 🟢 Alta / 🟡 Media / 🔴 Baja eficiencia |
-
----
-
-## 5. Gestión de data
-
-### 5.1 Carga histórica inicial
-
-```bash
-python generar_historico.py
-```
-
-| Tabla | Registros |
-|---|---|
-| tiendas | 20 |
-| catalogos | 200 productos |
-| inventarios | ~1,462 |
-| transacciones | ~6,216 |
-
-Temporada alta simulada: enero, febrero, junio, julio, octubre, noviembre y diciembre.
-
-### 5.2 Carga incremental automática
-
-Se ejecuta automáticamente al abrir el tablero. Verifica si ya existe data del día actual y solo carga los días pendientes. También puede ejecutarse manualmente:
-
-```bash
-python carga_incremental.py
+HTTP Request
+    → FastAPI Router
+        → Use Case (orquesta)
+            → Repository (accede a datos via ORM)
+                → PostgreSQL
+            ← DataFrame / Entity
+        ← DTO (validado por Pydantic)
+    ← JSON Response
 ```
 
 ---
 
-## 6. Estructura del proyecto
+## 📁 Estructura de Directorios
 
 ```
 Go_Retail/
-├── .env                              # Credenciales de conexión (no se sube a GitHub)
-├── .gitignore                        # Archivos excluidos del repositorio
-├── requirements.txt                  # Librerías Python necesarias
-├── README.md                         # Documentación técnica
-├── crear_tablas_Go_BD.py             # Crea las 4 tablas base en Go_BD
-├── generar_historico.py              # Genera la data sintética histórica
-├── carga_incremental.py              # Script de carga incremental manual
-├── modelo_pronostico.py              # Modelo Prophet
-├── modelo_lightgbm.py                # Modelo LightGBM
-├── modelo_segmentacion.py            # Segmentación ABC y K-Means
-├── modelo_anomalias.py               # Detección de anomalías Isolation Forest
-├── modelo_eoq.py                     # Cantidad óptima de pedido EOQ
-├── modelo_market_basket.py           # Productos que se compran juntos
-├── modelo_monte_carlo.py             # Simulación de riesgo de quiebre
-├── modelo_rentabilidad.py            # Índice de rentabilidad por SKU y tienda
-├── modelo_rotacion.py                # Velocidad de rotación de productos
-├── modelo_eficiencia_reposicion.py   # Eficiencia de reposición por tienda
-└── tablero.py                        # Tablero Streamlit con carga automática
+│
+├── app/                          # Backend FastAPI
+│   ├── main.py                   # Punto de entrada, CORS, exception handlers
+│   ├── api/
+│   │   ├── middleware/
+│   │   │   └── error_handler.py
+│   │   └── v1/
+│   │       ├── router.py         # Agrupador de todos los routers
+│   │       └── endpoints/
+│   │           ├── auth.py       # Login / tokens JWT
+│   │           ├── admin.py      # Gestión de usuarios
+│   │           ├── products.py   # Catálogo, ABC, Market Basket
+│   │           ├── inventory.py  # Anomalías, EOQ, Monte Carlo
+│   │           ├── analytics.py  # Rentabilidad, Rotación, Eficiencia
+│   │           ├── demand.py     # Prophet, LightGBM
+│   │           └── stores.py     # Catálogo de tiendas
+│   │
+│   ├── application/
+│   │   ├── dtos/                 # Schemas Pydantic (request / response)
+│   │   │   ├── auth_dto.py
+│   │   │   ├── product_dto.py
+│   │   │   ├── inventory_dto.py
+│   │   │   ├── analytics_dto.py
+│   │   │   └── demand_dto.py
+│   │   └── use_cases/            # Lógica de aplicación
+│   │       ├── auth_use_cases.py
+│   │       ├── product_use_cases.py
+│   │       ├── inventory_use_cases.py
+│   │       ├── analytics_use_cases.py
+│   │       └── demand_use_cases.py
+│   │
+│   ├── domain/
+│   │   ├── entities/             # Entidades de negocio puras
+│   │   │   ├── product.py
+│   │   │   ├── store.py
+│   │   │   ├── inventory.py
+│   │   │   └── user.py
+│   │   └── interfaces/           # Contratos de repositorios
+│   │       ├── i_product_repository.py
+│   │       ├── i_inventory_repository.py
+│   │       ├── i_analytics_repository.py
+│   │       ├── i_demand_repository.py
+│   │       └── i_auth_repository.py
+│   │
+│   ├── infrastructure/
+│   │   ├── orm/
+│   │   │   └── models.py         # Todos los modelos SQLAlchemy
+│   │   ├── repositories/         # Implementaciones concretas
+│   │   │   ├── inventory_repository.py
+│   │   │   ├── product_repository.py
+│   │   │   ├── analytics_repository.py
+│   │   │   ├── demand_repository.py
+│   │   │   └── auth_repository.py
+│   │   └── ml/                   # Modelos de Machine Learning
+│   │       ├── modelo_pronostico.py
+│   │       ├── modelo_lightgbm.py
+│   │       ├── modelo_anomalias.py
+│   │       ├── modelo_eoq.py
+│   │       ├── modelo_monte_carlo.py
+│   │       ├── modelo_rentabilidad.py
+│   │       ├── modelo_rotacion.py
+│   │       ├── modelo_eficiencia_reposicion.py
+│   │       ├── modelo_segmentacion.py
+│   │       └── modelo_market_basket.py
+│   │
+│   └── config/
+│       ├── database.py           # Engine SQLAlchemy + SessionLocal
+│       └── settings.py           # Variables de entorno (Pydantic Settings)
+│
+├── frontend/                     # React + Vite
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── client.js         # Axios con interceptores JWT
+│   │   │   └── endpoints.js      # Constantes de rutas API
+│   │   ├── components/
+│   │   │   ├── Layout.jsx        # Navbar + Sidebar
+│   │   │   ├── KPICard.jsx       # Tarjeta de métrica
+│   │   │   ├── RunModelBtn.jsx   # Botón ejecutar modelo ML
+│   │   │   └── Spinner.jsx
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx   # Estado global de autenticación
+│   │   └── pages/
+│   │       ├── LoginPage.jsx
+│   │       ├── DashboardPage.jsx
+│   │       ├── DemandPage.jsx
+│   │       ├── InventoryPage.jsx
+│   │       ├── AnalyticsPage.jsx
+│   │       ├── ProductsPage.jsx
+│   │       └── StoresPage.jsx
+│   └── vite.config.js
+│
+├── scripts/                      # Utilidades de carga y setup
+│   ├── crear_tablas_Go_BD.py
+│   ├── generar_historico.py
+│   ├── carga_incremental.py
+│   └── create_admin.py
+│
+├── requirements.txt
+├── .env
+└── README.md
 ```
 
 ---
 
-## 7. Cómo interpretar el tablero
+## 🗄 Modelos de Datos
 
-### 7.1 Barra de estado
-- ✅ **Verde:** carga incremental ejecutada. Data actualizada.
-- ℹ️ **Azul:** data del día ya cargada. Sin acción necesaria.
+### Tablas Base (fuente de datos)
 
-### 7.2 Métricas principales
-| Indicador | Cuándo actuar |
-|---|---|
-| Quiebres de stock | Acción inmediata |
-| Riesgo de quiebre | Acción urgente |
-| Sin movimiento | Revisar viabilidad |
+#### `catalogos` — Catálogo de Productos (SKUs)
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | VARCHAR (PK) | SKU ID único |
+| `name` | VARCHAR | Nombre del producto |
+| `product_id` | VARCHAR | Código de producto |
+| `categories` | VARCHAR | Categoría |
+| `brands` | VARCHAR | Marca |
+| `price` | NUMERIC | Precio de venta |
+| `cost` | NUMERIC | Costo del producto |
+| `seasons` | VARCHAR | Temporada |
+| `department_name` | VARCHAR | Departamento |
+| `custom_tipolinea` | VARCHAR | Tipo de línea |
+| `avoid_replenishment` | BOOLEAN | Excluir de reposición |
 
-### 7.3 Ventas históricas
-Evolución diaria de ventas. Picos altos indican temporada alta.
+#### `tiendas` — Red de Tiendas
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | INTEGER (PK) | ID de tienda |
+| `name` | VARCHAR | Nombre de la tienda |
+| `city` | VARCHAR | Ciudad |
+| `region` | VARCHAR | Región |
+| `custom_formato` | VARCHAR | Formato (express, supermercado…) |
+| `custom_clima` | VARCHAR | Clima de la zona |
+| `custom_zona` | VARCHAR | Zona geográfica |
+| `default_replenishment_lead_time` | INTEGER | Lead time de reposición (días) |
 
-### 7.4 Pronóstico 30 días
-Top 5 SKUs con mayor demanda estimada. Líneas más altas = mayor prioridad de reposición.
+#### `inventarios` — Stock por SKU-Tienda
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | INTEGER (PK) | ID registro |
+| `location_id` | VARCHAR | ID tienda |
+| `sku_id` | VARCHAR | ID producto |
+| `site_qty` | NUMERIC | Stock actual en tienda |
+| `transit_qty` | NUMERIC | Cantidad en tránsito |
+| `reserved_qty` | NUMERIC | Cantidad reservada |
+| `min_stock` | NUMERIC | Stock mínimo permitido |
+| `max_stock` | NUMERIC | Stock máximo permitido |
+| `replenishment_lead_time` | INTEGER | Días de reposición |
 
-### 7.5 Alertas de inventario
-- 🔴 Quiebres activos
-- 🟠 Riesgos de quiebre
-- 🔵 SKUs sin movimiento
-
-### 7.6 Segmentación ABC
-- **A:** 70% de ventas — máxima prioridad
-- **B:** 20% de ventas — seguimiento regular
-- **C:** 10% de ventas — evaluar continuidad
-
-### 7.7 Tiendas por segmento
-Alta demanda = prioridad máxima en reposición.
-
-### 7.8 Quiebres de stock
-Cobertura en días cercana a cero = emergencia inmediata.
-
-### 7.9 Top SKUs demanda estimada
-Color más oscuro = mayor urgencia de abastecimiento.
-
-### 7.10 EOQ
-| Estado | Acción |
-|---|---|
-| 🔴 Pedir ahora | Hacer pedido inmediato |
-| 🟡 Pedir pronto | Planificar pedido |
-| 🟢 Stock OK | Sin acción requerida |
-
-### 7.11 Market Basket
-Lift > 2 = abastecer productos juntos. Lift > 3 = considerar como combo.
-
-### 7.12 Monte Carlo
-| Nivel | Probabilidad | Acción |
-|---|---|---|
-| 🔴 Alto | ≥ 70% | Acción inmediata |
-| 🟡 Medio | 40–70% | Monitorear |
-| 🟢 Bajo | < 15% | Estable |
-
-### 7.13 Índice de Rentabilidad
-- **🟢 Alta:** margen e ingresos por encima del promedio. Priorizar disponibilidad.
-- **🟡 Media:** rentabilidad aceptable. Optimizar descuentos.
-- **🔴 Baja:** margen bajo o ventas insuficientes. Revisar precio o descontinuar.
-
-### 7.14 Velocidad de Rotación
-- **🚀 Alta:** producto estrella. Nunca debe estar en quiebre.
-- **🔄 Media:** seguimiento regular de inventario.
-- **🐢 Lenta:** revisar si vale la pena mantener stock alto.
-- **❄️ Sin movimiento:** stock inmovilizado. Considerar liquidación.
-
-### 7.15 Eficiencia de Reposición
-- **🟢 Alta:** tienda bien gestionada. Reposición oportuna y baja devolución.
-- **🟡 Media:** oportunidades de mejora en proceso de abastecimiento.
-- **🔴 Baja:** tienda con problemas crónicos de reposición. Requiere intervención.
+#### `transacciones` — Historial de Movimientos
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | INTEGER (PK) | ID transacción |
+| `receipt_id` | VARCHAR | ID recibo |
+| `sku_id` | VARCHAR | Producto involucrado |
+| `type` | VARCHAR | Tipo: `venta`, `devolución`, `ajuste` |
+| `source_location_id` | VARCHAR | Tienda origen |
+| `target_location_id` | VARCHAR | Tienda destino |
+| `quantity` | NUMERIC | Cantidad |
+| `sale_price` | NUMERIC | Precio de venta aplicado |
+| `transaction_date` | TIMESTAMP | Fecha y hora del movimiento |
 
 ---
 
-## 8. Instalación y ejecución local
+### Tablas de Resultados ML
 
-### Requisitos previos
-- Python 3.10 o superior
-- Git instalado
-- Cuenta en Neon (https://neon.tech)
-- Visual Studio Code (recomendado)
+| Tabla | Clave Primaria | Descripción |
+|-------|---------------|-------------|
+| `pronosticos` | `sku_id + fecha` | Pronósticos Prophet por SKU y día |
+| `predicciones_lgbm` | `sku_id + tienda_id` | Predicciones LightGBM por SKU-tienda |
+| `anomalias_inventario` | `sku_id + tienda_id` | Anomalías detectadas por Isolation Forest |
+| `eoq_resultados` | `sku_id + tienda_id` | Cantidades óptimas de pedido |
+| `montecarlo_riesgo` | `sku_id + tienda_id` | Niveles de riesgo simulados |
+| `rentabilidad_sku` | `sku_id + tienda_id` | Índice de rentabilidad por SKU-tienda |
+| `rotacion_sku` | `sku_id + tienda_id` | Velocidad de rotación de inventario |
+| `eficiencia_reposicion` | `tienda_id` | Eficiencia logística por tienda |
+| `segmentacion_skus` | `sku_id` | Segmento ABC de cada producto |
+| `segmentacion_tiendas` | `tienda_id` | Cluster KMeans de cada tienda |
+| `market_basket` | `sku_origen + sku_destino` | Reglas de asociación Apriori |
 
-### Pasos
+> **Nota técnica:** Todas las tablas de resultados ML usan **claves primarias naturales o compuestas** (sin columna `id` serial), ya que son creadas/reemplazadas por `pandas.to_sql()` en cada ejecución del modelo.
+
+---
+
+### Gestión de Usuarios
+
+#### `usuarios`
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `id` | SERIAL (PK) | ID usuario |
+| `username` | VARCHAR | Nombre de usuario único |
+| `email` | VARCHAR | Email único |
+| `hashed_password` | VARCHAR | Contraseña hasheada con bcrypt |
+| `rol` | VARCHAR | `admin` / `analyst` / `viewer` |
+| `activo` | BOOLEAN | Estado de la cuenta |
+| `creado_en` | TIMESTAMP | Fecha de creación |
+| `ultimo_acceso` | TIMESTAMP | Último login registrado |
+
+**Roles y permisos:**
+
+| Rol | Puede ver datos | Puede ejecutar modelos | Gestiona usuarios |
+|-----|:-:|:-:|:-:|
+| `viewer` | ✅ | ❌ | ❌ |
+| `analyst` | ✅ | ✅ | ❌ |
+| `admin` | ✅ | ✅ | ✅ |
+
+---
+
+## 🤖 Modelos de Machine Learning
+
+### 1. Prophet — Pronóstico de Demanda
+- **Archivo:** `modelo_pronostico.py`
+- **Algoritmo:** Facebook Prophet (series de tiempo aditivas)
+- **Entrada:** historial de ventas por SKU agrupado por día
+- **Salida:** predicción diaria de demanda para los próximos 30 días
+- **Tabla resultado:** `pronosticos`
+
+### 2. LightGBM — Predicción por Tienda-SKU
+- **Archivo:** `modelo_lightgbm.py`
+- **Algoritmo:** Gradient Boosting optimizado (LightGBM)
+- **Features:** día semana, mes, tienda, stock actual, precio, lags de ventas
+- **Salida:** cantidad predicha de ventas por combinación tienda-SKU
+- **Tabla resultado:** `predicciones_lgbm`
+
+### 3. Isolation Forest — Detección de Anomalías
+- **Archivo:** `modelo_anomalias.py`
+- **Algoritmo:** Isolation Forest (detección no supervisada de outliers)
+- **Detecta:** sobrestock, quiebre de stock, stock congelado (sin rotación)
+- **Salida:** etiqueta de anomalía + score de aislamiento por SKU-tienda
+- **Tabla resultado:** `anomalias_inventario`
+
+### 4. EOQ — Cantidad Económica de Pedido
+- **Archivo:** `modelo_eoq.py`
+- **Algoritmo:** Fórmula clásica EOQ `Q* = √(2DS/H)`
+- **Calcula:** cantidad óptima de reorden, punto de reorden, stock de seguridad, estado de reposición
+- **Tabla resultado:** `eoq_resultados`
+
+### 5. Monte Carlo — Simulación de Riesgo de Quiebre
+- **Archivo:** `modelo_monte_carlo.py`
+- **Algoritmo:** Simulación estocástica (10,000 iteraciones por SKU-tienda)
+- **Calcula:** probabilidad de quiebre de stock, nivel de riesgo clasificado en BAJO / MEDIO / ALTO
+- **Tabla resultado:** `montecarlo_riesgo`
+
+### 6. Rentabilidad — Análisis Financiero por SKU
+- **Archivo:** `modelo_rentabilidad.py`
+- **Calcula:** margen porcentual `(precio - costo) / precio`, rentabilidad total, índice combinado
+- **Clasificación:** Alta / Media / Baja rentabilidad
+- **Tabla resultado:** `rentabilidad_sku`
+
+### 7. Rotación — Velocidad de Venta de Inventario
+- **Archivo:** `modelo_rotacion.py`
+- **Calcula:** tasa de rotación anual, DSI (días de inventario en stock), frecuencia de venta
+- **Clasificación:** Alta / Media / Baja rotación
+- **Tabla resultado:** `rotacion_sku`
+
+### 8. Eficiencia de Reposición
+- **Archivo:** `modelo_eficiencia_reposicion.py`
+- **Calcula:** cobertura de reposición, tasa de devolución, eficiencia de SKUs activos, índice global
+- **Tabla resultado:** `eficiencia_reposicion`
+
+### 9. Segmentación ABC + KMeans
+- **Archivo:** `modelo_segmentacion.py`
+- **SKUs — Análisis ABC:** A = 70% de ventas acumuladas, B = siguiente 20%, C = 10% restante
+- **Tiendas — K-Means:** agrupa tiendas por métricas de ventas/stock; k óptimo por silhouette score
+- **Tablas resultado:** `segmentacion_skus`, `segmentacion_tiendas`
+
+### 10. Market Basket — Análisis de Asociación
+- **Archivo:** `modelo_market_basket.py`
+- **Algoritmo:** Apriori + reglas de asociación (mlxtend)
+- **Métricas generadas:** soporte, confianza, lift, convicción
+- **Tabla resultado:** `market_basket`
+
+---
+
+## 🌐 API REST
+
+**Base URL:** `http://localhost:8000/api/v1`  
+**Documentación interactiva:** `http://localhost:8000/api/docs`
+
+### Autenticación
+| Método | Endpoint | Descripción | Auth |
+|--------|---------|-------------|------|
+| `POST` | `/auth/login` | Obtener token JWT | ❌ |
+| `GET` | `/auth/me` | Perfil del usuario actual | ✅ |
+
+### Productos y Segmentación
+| Método | Endpoint | Descripción | Rol mínimo |
+|--------|---------|-------------|-----------|
+| `GET` | `/products` | Catálogo completo de SKUs | viewer |
+| `GET` | `/products/segmentation/abc` | Segmentación ABC | viewer |
+| `GET` | `/products/market-basket/rules` | Reglas de asociación | viewer |
+| `POST` | `/products/run/segmentation` | ▶ Ejecutar modelo ABC + KMeans | analyst |
+| `POST` | `/products/run/market-basket` | ▶ Ejecutar Market Basket | analyst |
+
+### Inventario
+| Método | Endpoint | Descripción | Rol mínimo |
+|--------|---------|-------------|-----------|
+| `GET` | `/inventory/anomalies` | Anomalías detectadas | viewer |
+| `GET` | `/inventory/eoq` | Resultados EOQ | viewer |
+| `GET` | `/inventory/montecarlo` | Simulaciones Monte Carlo | viewer |
+| `POST` | `/inventory/run/anomalies` | ▶ Ejecutar Isolation Forest | analyst |
+| `POST` | `/inventory/run/eoq` | ▶ Ejecutar modelo EOQ | analyst |
+| `POST` | `/inventory/run/montecarlo` | ▶ Ejecutar Monte Carlo | analyst |
+
+### Analítica
+| Método | Endpoint | Descripción | Rol mínimo |
+|--------|---------|-------------|-----------|
+| `GET` | `/analytics/rentability` | Rentabilidad por SKU-Tienda | viewer |
+| `GET` | `/analytics/rotation` | Rotación por SKU-Tienda | viewer |
+| `GET` | `/analytics/efficiency` | Eficiencia por tienda | viewer |
+| `POST` | `/analytics/run/rentability` | ▶ Ejecutar modelo rentabilidad | analyst |
+| `POST` | `/analytics/run/rotation` | ▶ Ejecutar modelo rotación | analyst |
+| `POST` | `/analytics/run/efficiency` | ▶ Ejecutar modelo eficiencia | analyst |
+
+### Demanda
+| Método | Endpoint | Descripción | Rol mínimo |
+|--------|---------|-------------|-----------|
+| `GET` | `/demand/forecasts` | Pronósticos Prophet | viewer |
+| `GET` | `/demand/predictions` | Predicciones LightGBM | viewer |
+| `POST` | `/demand/run/forecast` | ▶ Ejecutar Prophet | analyst |
+| `POST` | `/demand/run/lgbm` | ▶ Ejecutar LightGBM | analyst |
+
+---
+
+## 💻 Frontend
+
+Aplicación SPA construida con **React 18 + Vite**, que consume la API REST y visualiza los resultados con **Recharts**.
+
+### Páginas
+
+| Ruta | Página | Visualizaciones |
+|------|--------|----------------|
+| `/` | Dashboard | KPIs globales + barras de demanda top SKUs |
+| `/demand` | Demanda | Líneas Prophet + scatter LightGBM |
+| `/inventory` | Inventario | Pastel anomalías + barras Monte Carlo + tabla EOQ |
+| `/analytics` | Analítica | Barras rentabilidad + pastel rotación + barras eficiencia |
+| `/products` | Productos | Pastel ABC + barras Market Basket + tablas detalle |
+| `/stores` | Tiendas | Catálogo de tiendas con segmento KMeans |
+| `/login` | Login | Formulario de autenticación JWT |
+
+### Componentes Clave
+
+| Componente | Descripción |
+|-----------|-------------|
+| `Layout.jsx` | Barra lateral de navegación + header con usuario y botón logout |
+| `RunModelBtn.jsx` | Botón que ejecuta un modelo ML, muestra estado y refresca datos con `onSuccess` callback |
+| `KPICard.jsx` | Tarjeta de métrica con ícono, valor principal y etiqueta descriptiva |
+| `AuthContext.jsx` | Contexto React global con token JWT, datos de usuario y función de logout |
+| `client.js` | Instancia de Axios con interceptor que inyecta el header `Authorization: Bearer <token>` |
+
+---
+
+## 📊 Explicación de Gráficas
+
+### 🏠 Dashboard
+
+#### Barras — Demanda Estimada: Top 8 SKUs
+Muestra los 8 productos con mayor demanda estimada. Cada barra representa un SKU y su altura indica las unidades proyectadas. De un vistazo permite identificar qué productos necesitan prioridad en el abastecimiento y cuáles tienen mayor presión de venta.
+
+---
+
+### 📈 Demanda
+
+#### Líneas — Pronóstico Prophet: Top 5 SKUs (30 días)
+Proyección de ventas para los próximos 30 días. Cada línea de color corresponde a un SKU diferente. Una línea ascendente indica crecimiento de demanda; descendente, reducción. Se usa para planificar compras, transferencias entre tiendas y negociaciones con proveedores con anticipación.
+
+#### Dispersión (Scatter) — LightGBM: Real vs Predicho
+Compara el valor real de ventas (eje Y) contra el valor predicho por el modelo (eje X). Cuando los puntos se concentran sobre la diagonal perfecta `y = x`, el modelo predice con alta precisión. Puntos muy dispersos indican oportunidad de mejorar el modelo con más datos o mejores features.
+
+---
+
+### 📦 Inventario
+
+#### Pastel — Tipos de Anomalías (Isolation Forest)
+Clasifica las anomalías detectadas por tipo: **sobrestock** (exceso acumulado), **quiebre de stock** (agotamiento) y **stock congelado** (sin movimiento). Cada segmento representa la proporción de cada tipo sobre el total de anomalías, permitiendo priorizar el tipo de problema a resolver primero.
+
+#### Barras — Monte Carlo: Nivel de Riesgo de Quiebre
+Resultado de 10,000 simulaciones que evalúan la probabilidad de agotarse antes del próximo reabastecimiento. Agrupa los SKUs por nivel: **BAJO** (sin urgencia), **MEDIO** (monitorear) y **ALTO** (reposición inmediata). Las barras más altas en riesgo ALTO representan la alerta más crítica para operaciones.
+
+#### Tabla — EOQ: Cantidad Óptima de Pedido por SKU-Tienda
+Guía operativa para el equipo de compras. Muestra por cada combinación producto-tienda: la cantidad exacta a pedir (EOQ), el punto de reorden en unidades, el stock de seguridad recomendado y el estado actual (OK / Reponer / Crítico).
+
+---
+
+### 💰 Analítica
+
+#### Barras — Índice de Rentabilidad: Top SKUs
+Ranking de los productos más rentables según el índice que combina margen porcentual y volumen de ventas. Las barras más altas son los SKUs que generan mayor valor económico para la empresa. Guía decisiones de pricing, negociación con proveedores y foco comercial.
+
+#### Pastel — Clasificación de Rotación de SKUs
+Distribuye el catálogo en tres categorías de velocidad de venta: **Alta rotación** (se venden rápido, mantener stock), **Media rotación** (monitorear) y **Baja rotación** (capital inmovilizado, evaluar descuento o liquidación). Un segmento grande en baja rotación es una señal de alerta financiera.
+
+#### Barras Horizontales — Eficiencia de Reposición por Tienda
+Compara el desempeño logístico de cada tienda combinando cobertura de reposición, tasa de devolución y eficiencia de SKUs activos. Las tiendas con barra corta tienen procesos logísticos deficientes y requieren revisión operativa o apoyo adicional.
+
+---
+
+### 🛒 Productos
+
+#### Pastel — Segmentación ABC de SKUs
+Clasifica el catálogo según el principio de Pareto:
+- **Segmento A** — pocos SKUs que generan el **70% de las ventas** → máxima prioridad, nunca deben faltar
+- **Segmento B** — SKUs de rotación media que aportan el **20% de ventas** → mantener con buffer moderado
+- **Segmento C** — mayoría de SKUs con solo el **10% de ventas** → revisar si justifican espacio en anaquel
+
+#### Barras Horizontales — Market Basket: Productos Más Comprados Juntos (Lift)
+Visualiza las reglas de asociación más fuertes entre productos. El **Lift** mide la intensidad de la relación entre dos SKUs:
+- `Lift > 1` → la relación es real, no casualidad
+- `Lift > 2` → relación fuerte → ubicar juntos en la tienda
+- `Lift > 3` → relación muy fuerte → crear bundle o promoción cruzada
+
+Las barras más largas indican los pares de productos con mayor potencial para estrategias de cross-selling.
+
+---
+
+## ⚙️ Instalación y Ejecución
+
+### Backend
 
 ```bash
-git clone https://github.com/andresenvigado-jpg/Go_Retail.git
-cd Go_Retail
+# 1. Clonar el repositorio
+git clone https://github.com/andresenvigado-jpg/Go_Retail_moderno.git
+cd Go_Retail_moderno
+
+# 2. Crear entorno virtual
 python -m venv venv
-venv\Scripts\activate
-python -m pip install -r requirements.txt
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Linux / Mac
 
-# Configurar .env con credenciales de Neon
+# 3. Instalar dependencias
+pip install -r requirements.txt
 
-python crear_tablas_Go_BD.py
-python generar_historico.py
-python modelo_pronostico.py
-python modelo_lightgbm.py
-python modelo_segmentacion.py
-python modelo_anomalias.py
-python modelo_eoq.py
-python modelo_market_basket.py
-python modelo_monte_carlo.py
-python modelo_rentabilidad.py
-python modelo_rotacion.py
-python modelo_eficiencia_reposicion.py
+# 4. Configurar variables de entorno
+# Crear .env con las variables indicadas en la sección siguiente
 
-python -m streamlit run tablero.py
+# 5. Crear usuario administrador inicial
+python scripts/create_admin.py
+
+# 6. Iniciar el servidor
+uvicorn app.main:app --reload --port 8000
+```
+
+La API queda disponible en `http://localhost:8000`  
+Documentación Swagger en `http://localhost:8000/api/docs`
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+La app queda disponible en `http://localhost:5173`
+
+---
+
+## 🔐 Variables de Entorno
+
+Crear un archivo `.env` en la raíz del proyecto:
+
+```env
+# ─── Base de datos PostgreSQL ───────────────────────────
+DB_HOST=your-host.neon.tech
+DB_NAME=your_database_name
+DB_USER=your_user
+DB_PASSWORD=your_password
+DB_PORT=5432
+
+# ─── Seguridad JWT ──────────────────────────────────────
+SECRET_KEY=clave_secreta_larga_y_aleatoria_minimo_32_chars
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=480
 ```
 
 ---
 
-## 9. Publicación en Streamlit Cloud
+## 📄 Licencia
 
-- **Repositorio:** https://github.com/andresenvigado-jpg/Go_Retail
-- **Archivo principal:** `tablero.py`
-- **Actualización:** automática al hacer `git push`
-
-### Secrets (formato TOML)
-
-```toml
-DB_HOST = "ep-tu-host.neon.tech"
-DB_NAME = "neondb"
-DB_USER = "neondb_owner"
-DB_PASSWORD = "tu_contraseña"
-DB_PORT = "5432"
-```
-
----
-
-## 10. Librerías utilizadas
-
-| Librería | Versión | Uso |
-|---|---|---|
-| streamlit | 1.56.0 | Tablero web |
-| plotly | 6.7.0 | Gráficos interactivos |
-| pandas | 3.0.2 | Manipulación de datos |
-| prophet | 1.3.0 | Pronóstico de demanda |
-| lightgbm | 4.6.0 | Predicción por tienda |
-| scikit-learn | 1.8.0 | Clustering y anomalías |
-| mlxtend | 0.24.0 | Market Basket Analysis |
-| numpy | 2.4.4 | Cálculos y simulación Monte Carlo |
-| psycopg2-binary | latest | Conexión PostgreSQL |
-| sqlalchemy | latest | ORM SQL |
-| python-dotenv | latest | Variables de entorno |
-
----
-
-*Go Retail — Documentación técnica v3.0 — Abril 2026*
+Proyecto desarrollado para **Go Retail** — 2026.  
+Todos los derechos reservados.
