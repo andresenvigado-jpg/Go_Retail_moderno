@@ -1,7 +1,7 @@
 import client from './client'
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
+const BASE_URL = 'https://go-retail-moderno.onrender.com/api/v1'
 
 // ── Auth ─────────────────────────────────────────────────────────
 export const login = async (username, password) => {
