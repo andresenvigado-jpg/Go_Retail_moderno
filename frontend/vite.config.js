@@ -8,7 +8,7 @@ export default defineConfig({
     proxy: {
       '/api': {
         //target: 'http://localhost:8000', // Solo dev local  https://go-retail-moderno.onrender.com/api/docs
-         target: 'https://go-retail-moderno.onrender.com',
+        target: 'https://go-retail-moderno.onrender.com/api',
         changeOrigin: true,
       },
     },
