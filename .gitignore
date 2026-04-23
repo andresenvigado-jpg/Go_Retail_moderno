@@ -16,3 +16,8 @@ __pycache__/
 
 # Logs
 *.log
+
+node_modules/
+dist/
+.env
+.env.local
