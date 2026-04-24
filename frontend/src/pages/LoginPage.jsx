@@ -28,6 +28,11 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-logo">
+          <img
+            src="/softline-logo.png"
+            alt="Softline S.A."
+            style={{ width: 180, marginBottom: 20 }}
+          />
           <h1>Go Retail</h1>
           <p>Supply Chain Intelligence API</p>
         </div>
