@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { login as apiLogin, getMe } from '../api/endpoints'
+import client from '../api/client'
 
 const AuthContext = createContext(null)
 
@@ -27,6 +28,12 @@ export function AuthProvider({ children }) {
     const me = await getMe()
     localStorage.setItem('user', JSON.stringify(me))
     setUser(me)
+
+    // Validar y cargar datos del día en segundo plano (sin bloquear)
+    client.post('/admin/check-and-load')
+      .then(r => console.log('✅ Datos verificados:', r.data?.message))
+      .catch(e => console.warn('⚠️ Check-and-load:', e.message))
+
     return me
   }
 

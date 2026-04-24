@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
+import random
 
 from app.config.database import get_db, engine
-from app.core.dependencies import require_admin, require_analyst
+from app.core.dependencies import require_admin, require_analyst, get_current_user
 from app.application.dtos.demand_dto import RunModelResponse
 from app.infrastructure.repositories.demand_repository import DemandRepository
 from app.infrastructure.repositories.inventory_repository import InventoryRepository
@@ -79,4 +81,90 @@ def load_incremental():
             "error": result.stderr[-1000:] if result.stderr else "",
         }
     except Exception as exc:
+        return {"status": "error", "message": str(exc)}
+
+
+@router.post(
+    "/check-and-load",
+    summary="Validar y cargar datos del día",
+    description="Verifica si hay datos del día actual. Si no, genera transacciones sintéticas automáticamente.",
+    dependencies=[Depends(get_current_user)],
+)
+def check_and_load(db: Session = Depends(get_db)):
+    try:
+        TEMPORADA_ALTA = [1, 2, 6, 7, 10, 11, 12]
+        TIPO_TRANSAC   = ["venta", "reposicion", "devolucion", "traslado"]
+
+        # 1. Verificar última fecha con datos
+        result = db.execute(
+            __import__("sqlalchemy").text("SELECT MAX(transaction_date) FROM transacciones")
+        ).fetchone()
+        ultima_fecha = result[0] if result and result[0] else datetime.now() - timedelta(days=3)
+
+        dias_pendientes = (datetime.now() - ultima_fecha).days
+        if dias_pendientes <= 0:
+            return {"status": "ok", "message": "Datos al día", "transacciones_nuevas": 0}
+
+        # 2. Obtener tiendas y SKUs
+        tiendas = [str(r[0]) for r in db.execute(
+            __import__("sqlalchemy").text("SELECT id FROM tiendas")
+        ).fetchall()]
+        skus = [str(r[0]) for r in db.execute(
+            __import__("sqlalchemy").text("SELECT id FROM catalogos")
+        ).fetchall()]
+
+        if not tiendas or not skus:
+            return {"status": "error", "message": "No hay tiendas o SKUs en la base de datos"}
+
+        # 3. Generar transacciones faltantes
+        total = 0
+        fecha = ultima_fecha + timedelta(days=1)
+        fecha_hasta = datetime.now()
+
+        while fecha <= fecha_hasta:
+            mes = fecha.month
+            ventas_dia = random.randint(15, 30) if mes in TEMPORADA_ALTA else random.randint(5, 15)
+
+            for _ in range(ventas_dia):
+                tienda_id = random.choice(tiendas)
+                sku_id    = random.choice(skus)
+                tipo      = random.choices(TIPO_TRANSAC, weights=[70, 15, 10, 5])[0]
+                cantidad  = random.randint(1, 5) if tipo == "venta" else random.randint(5, 30)
+                precio    = round(random.uniform(30000, 350000), 2) if tipo == "venta" else 0
+
+                db.execute(__import__("sqlalchemy").text("""
+                    INSERT INTO transacciones
+                        (receipt_id, sku_id, source_location_id, target_location_id,
+                         quantity, sale_price, currency, type,
+                         transaction_date, transaction_date_process)
+                    VALUES
+                        (:receipt_id, :sku_id, :source, :target,
+                         :qty, :price, 'COP', :tipo,
+                         :fecha, :now)
+                """), {
+                    "receipt_id": f"AUTO_{total:08d}",
+                    "sku_id":     sku_id,
+                    "source":     "BODEGA_CENTRAL",
+                    "target":     tienda_id,
+                    "qty":        cantidad,
+                    "price":      precio,
+                    "tipo":       tipo,
+                    "fecha":      fecha,
+                    "now":        datetime.now(),
+                })
+                total += 1
+
+            fecha += timedelta(days=1)
+
+        db.commit()
+
+        return {
+            "status":               "ok",
+            "message":              f"Datos generados correctamente",
+            "dias_cargados":        dias_pendientes,
+            "transacciones_nuevas": total,
+        }
+
+    except Exception as exc:
+        db.rollback()
         return {"status": "error", "message": str(exc)}
