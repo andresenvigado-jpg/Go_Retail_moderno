@@ -7,6 +7,10 @@
       "dest": "/assets/$1"
     },
     {
+      "src": "/(.+\\.(png|jpg|jpeg|svg|ico|webp|gif|woff|woff2|ttf|eot))",
+      "dest": "/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
