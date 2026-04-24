@@ -1,5 +1,6 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import SoftlineLogo from './SoftlineLogo'
 
 const navItems = [
   { to: '/',           icon: '🏠', label: 'Inicio' },
@@ -35,6 +36,9 @@ export default function Layout({ children }) {
         <div className="sidebar-logo">
           <h1>Go Retail</h1>
           <span>Supply Chain Intelligence</span>
+          <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <SoftlineLogo size="sm" />
+          </div>
         </div>
 
         <nav className="sidebar-nav">

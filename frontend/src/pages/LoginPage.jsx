@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import SoftlineLogo from '../components/SoftlineLogo'
 
 export default function LoginPage() {
   const { login } = useAuth()
@@ -28,11 +29,9 @@ export default function LoginPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-logo">
-          <img
-            src="/softline-logo.png"
-            alt="Softline S.A."
-            style={{ width: 180, marginBottom: 20 }}
-          />
+          <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'center' }}>
+            <SoftlineLogo size="lg" />
+          </div>
           <h1>Go Retail</h1>
           <p>Supply Chain Intelligence API</p>
         </div>
