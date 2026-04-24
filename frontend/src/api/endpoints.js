@@ -52,3 +52,11 @@ export const runMarketBasket   = () => client.post('/products/run/market-basket'
 // ── Tiendas ───────────────────────────────────────────────────────
 export const getStores             = () => client.get('/stores').then(r => r.data)
 export const getStoreSegmentation  = () => client.get('/products/segmentation/abc').then(r => r.data)
+
+// ── Cumplimiento ──────────────────────────────────────────────────
+export const getComplianceReport = (desde, hasta) => {
+  const params = {}
+  if (desde) params.fecha_desde = desde
+  if (hasta) params.fecha_hasta = hasta
+  return client.get('/compliance/report', { params }).then(r => r.data)
+}

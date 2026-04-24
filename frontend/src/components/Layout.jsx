@@ -3,22 +3,25 @@ import { useAuth } from '../context/AuthContext'
 import SoftlineLogo from './SoftlineLogo'
 
 const navItems = [
-  { to: '/',           icon: '🏠', label: 'Inicio' },
+  { to: '/',            icon: '🏠', label: 'Inicio' },
   { section: 'Modelos ML' },
-  { to: '/demand',     icon: '📈', label: 'Demanda' },
-  { to: '/inventory',  icon: '📦', label: 'Inventario' },
-  { to: '/analytics',  icon: '💰', label: 'Analítica' },
-  { to: '/products',   icon: '🛍️', label: 'Productos' },
-  { to: '/stores',     icon: '🏪', label: 'Tiendas' },
+  { to: '/demand',      icon: '📈', label: 'Demanda' },
+  { to: '/inventory',   icon: '📦', label: 'Inventario' },
+  { to: '/analytics',   icon: '💰', label: 'Analítica' },
+  { to: '/products',    icon: '🛍️', label: 'Productos' },
+  { to: '/stores',      icon: '🏪', label: 'Tiendas' },
+  { section: 'Gestión' },
+  { to: '/compliance',  icon: '🎯', label: 'Cumplimiento' },
 ]
 
 const titles = {
-  '/':          { title: 'Dashboard',         subtitle: 'Resumen ejecutivo de la cadena de suministro' },
-  '/demand':    { title: 'Demanda & Pronósticos', subtitle: 'Prophet · LightGBM' },
-  '/inventory': { title: 'Inventario & Riesgo',   subtitle: 'Anomalías · EOQ · Monte Carlo' },
-  '/analytics': { title: 'Analítica de Negocio',  subtitle: 'Rentabilidad · Rotación · Eficiencia' },
-  '/products':  { title: 'Productos',              subtitle: 'Segmentación ABC · Market Basket' },
-  '/stores':    { title: 'Tiendas',                subtitle: 'Catálogo y segmentación de tiendas' },
+  '/':           { title: 'Dashboard',              subtitle: 'Resumen ejecutivo de la cadena de suministro' },
+  '/demand':     { title: 'Demanda & Pronósticos',  subtitle: 'Prophet · LightGBM' },
+  '/inventory':  { title: 'Inventario & Riesgo',    subtitle: 'Anomalías · EOQ · Monte Carlo' },
+  '/analytics':  { title: 'Analítica de Negocio',   subtitle: 'Rentabilidad · Rotación · Eficiencia' },
+  '/products':   { title: 'Productos',               subtitle: 'Segmentación ABC · Market Basket' },
+  '/stores':     { title: 'Tiendas',                 subtitle: 'Catálogo y segmentación de tiendas' },
+  '/compliance': { title: 'Cumplimiento de Metas',   subtitle: 'KMeans · Tendencias · Alertas' },
 }
 
 export default function Layout({ children }) {

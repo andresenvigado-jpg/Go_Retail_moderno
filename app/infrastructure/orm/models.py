@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import (
-    Boolean, Column, DateTime, Float, Integer,
-    String, Text, ForeignKey, Date, func,
+    Boolean, Column, DateTime, Float, Integer, Numeric,
+    String, Text, ForeignKey, Date, SmallInteger, func,
 )
 from app.config.database import Base
 
@@ -239,3 +239,34 @@ class LogCargaORM(Base):
     tipo = Column(String)
     registros_nuevos = Column(Integer)
     detalle = Column(Text, nullable=True)
+
+
+# ─────────────────────────────────────────────────────────────────
+# METAS DE VENTAS POR TIENDA
+# ─────────────────────────────────────────────────────────────────
+
+class MetaVentasORM(Base):
+    __tablename__ = "metas_ventas"
+
+    id                = Column(Integer, primary_key=True)
+    tienda_id         = Column(Integer, ForeignKey("tiendas.id"), nullable=False, index=True)
+    fecha             = Column(Date, nullable=False, index=True)
+    anio              = Column(SmallInteger, nullable=False)
+    mes               = Column(SmallInteger, nullable=False)
+    semana_iso        = Column(SmallInteger, nullable=False)
+    dia_semana        = Column(SmallInteger, nullable=False)
+    trimestre         = Column(SmallInteger, nullable=False)
+    es_temporada_alta = Column(Boolean, default=False)
+
+    # Metas en valor COP
+    meta_diaria_cop   = Column(Numeric(15, 2), nullable=False)
+    meta_semanal_cop  = Column(Numeric(15, 2), nullable=False)
+    meta_mensual_cop  = Column(Numeric(15, 2), nullable=False)
+
+    # Metas en unidades
+    meta_diaria_und   = Column(Integer, nullable=False)
+    meta_semanal_und  = Column(Integer, nullable=False)
+    meta_mensual_und  = Column(Integer, nullable=False)
+
+    created_at        = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at        = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

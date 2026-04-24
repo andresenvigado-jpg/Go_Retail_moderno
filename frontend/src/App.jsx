@@ -8,6 +8,7 @@ import InventoryPage from './pages/InventoryPage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import ProductsPage from './pages/ProductsPage'
 import StoresPage from './pages/StoresPage'
+import CompliancePage from './pages/CompliancePage'
 import Spinner from './components/Spinner'
 
 function PrivateRoute({ children }) {
@@ -33,8 +34,9 @@ export default function App() {
           <Route path="/inventory" element={<PrivateRoute><InventoryPage /></PrivateRoute>} />
           <Route path="/analytics" element={<PrivateRoute><AnalyticsPage /></PrivateRoute>} />
           <Route path="/products"  element={<PrivateRoute><ProductsPage /></PrivateRoute>} />
-          <Route path="/stores"    element={<PrivateRoute><StoresPage /></PrivateRoute>} />
-          <Route path="*"          element={<Navigate to="/" replace />} />
+          <Route path="/stores"      element={<PrivateRoute><StoresPage /></PrivateRoute>} />
+          <Route path="/compliance" element={<PrivateRoute><CompliancePage /></PrivateRoute>} />
+          <Route path="*"           element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
